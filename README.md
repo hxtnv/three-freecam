@@ -1,17 +1,23 @@
 # three-freecam
 
-[![npm](https://img.shields.io/npm/v/three-freecam.svg)](https://www.npmjs.com/package/three-freecam)
-[![bundle size](https://img.shields.io/bundlephobia/minzip/three-freecam)](https://bundlephobia.com/package/three-freecam)
-[![license](https://img.shields.io/npm/l/three-freecam.svg)](./LICENSE)
+[![npm](https://img.shields.io/npm/v/three-freecam?color=cb3837&logo=npm)](https://www.npmjs.com/package/three-freecam)
+[![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
+[![dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)](./package.json)
 
 Unity scene-view camera controls for [three.js](https://threejs.org). Right-drag to look, WASD to
 fly, middle-drag to pan, alt-drag to orbit, wheel to dolly.
 
-No dependencies, no UI, no assumptions about your render loop. Around 3 kB gzipped.
+No dependencies, no UI, no assumptions about your render loop. 1.8 kB gzipped.
 
 ```bash
 npm i three-freecam
 ```
+
+## Demo
+
+[video](https://github.com/user-attachments/assets/26d79450-b3d2-473b-a3c1-6abc4881cab2)
+
+Run it locally: `npm run build`, then serve the repo root and open `examples/`.
 
 ## Usage
 
