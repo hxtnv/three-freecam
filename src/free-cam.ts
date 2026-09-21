@@ -1,7 +1,7 @@
 import { Box3, Euler, Matrix4, Object3D, Quaternion, Sphere, Vector3 } from "three";
 import type { Camera, PerspectiveCamera } from "three";
 
-export interface SceneFlyKeys {
+export interface FreeCamKeys {
   forward: string[];
   back: string[];
   left: string[];
@@ -12,7 +12,7 @@ export interface SceneFlyKeys {
   focus: string[];
 }
 
-export interface SceneFlyOptions {
+export interface FreeCamOptions {
   /** Base fly speed in world units per second. Adjustable at runtime with the scroll wheel. */
   moveSpeed?: number;
   /** Multiplier while the boost key is held. */
@@ -35,12 +35,12 @@ export interface SceneFlyOptions {
   invertY?: boolean;
   /** Clamp on pitch, in radians. */
   maxPitch?: number;
-  keys?: Partial<SceneFlyKeys>;
+  keys?: Partial<FreeCamKeys>;
   /** Take pointer lock while dragging, so the look never runs out of screen. */
   pointerLock?: boolean;
 }
 
-const DEFAULT_KEYS: SceneFlyKeys = {
+const DEFAULT_KEYS: FreeCamKeys = {
   forward: ["KeyW", "ArrowUp"],
   back: ["KeyS", "ArrowDown"],
   left: ["KeyA", "ArrowLeft"],
@@ -65,7 +65,7 @@ const _matrix = new Matrix4();
  * Right drag to look and WASD to fly, middle drag to pan, alt + left drag to orbit, wheel to
  * dolly, F to frame the focus target.
  */
-export class SceneFly {
+export class FreeCam {
   enabled = true;
   moveSpeed: number;
   boost: number;
@@ -84,7 +84,7 @@ export class SceneFly {
 
   private readonly camera: Camera;
   private readonly dom: HTMLElement;
-  private readonly keymap: SceneFlyKeys;
+  private readonly keymap: FreeCamKeys;
   private readonly held = new Set<string>();
   private readonly euler = new Euler(0, 0, 0, "YXZ");
   private readonly velocity = new Vector3();
@@ -94,7 +94,7 @@ export class SceneFly {
   private pivotDistance = 10;
   private locked = false;
 
-  constructor(camera: Camera, dom: HTMLElement, options: SceneFlyOptions = {}) {
+  constructor(camera: Camera, dom: HTMLElement, options: FreeCamOptions = {}) {
     this.camera = camera;
     this.dom = dom;
     this.moveSpeed = options.moveSpeed ?? 12;

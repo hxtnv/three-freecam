@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>scenefly</title>
+    <title>three-freecam</title>
     <style>
       body { margin: 0; overflow: hidden; background: #111; font: 12px/1.6 ui-monospace, monospace; }
       #help { position: fixed; left: 12px; bottom: 12px; color: #9ad; white-space: pre; }
@@ -16,7 +16,7 @@
 middle-drag pan · wheel dolly · alt+left orbit · f focus</div>
     <script type="module">
       import * as THREE from "three";
-      import { SceneFly } from "../dist/index.js";
+      import { FreeCam } from "../dist/index.js";
 
       const renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setSize(innerWidth, innerHeight);
@@ -50,9 +50,9 @@ middle-drag pan · wheel dolly · alt+left orbit · f focus</div>
       blocks.computeBoundingSphere();
       scene.add(blocks);
 
-      const fly = new SceneFly(camera, renderer.domElement, { moveSpeed: 16 });
+      const fly = new FreeCam(camera, renderer.domElement, { moveSpeed: 16 });
       fly.placeAt(new THREE.Vector3(40, 26, 46), new THREE.Vector3(0, 4, 0));
-      window.scenefly = { camera, fly, scene };
+      window.freecam = { camera, fly, scene };
 
       const clock = new THREE.Clock();
       renderer.setAnimationLoop(() => {

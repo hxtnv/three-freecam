@@ -1,5 +1,5 @@
 {
-  "name": "scenefly",
+  "name": "three-freecam",
   "version": "0.1.0",
   "description": "Unity scene-view camera controls for three.js. Right-drag to look, WASD to fly, middle-drag to pan, alt-drag to orbit.",
   "type": "module",
@@ -12,7 +12,11 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "sideEffects": false,
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -22,29 +26,39 @@
   "keywords": [
     "three",
     "threejs",
+    "three.js",
     "camera",
     "controls",
+    "camera-controls",
+    "freecam",
     "fly-controls",
     "orbit-controls",
     "unity",
     "editor",
     "scene-view",
+    "flythrough",
     "webgl",
     "webgpu"
   ],
-  "author": "theneuetimes",
+  "author": {
+    "name": "hxtnv",
+    "url": "https://github.com/hxtnv"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/theneuetimes/scenefly.git"
+    "url": "git+https://github.com/hxtnv/three-freecam.git"
   },
-  "bugs": { "url": "https://github.com/theneuetimes/scenefly/issues" },
-  "homepage": "https://github.com/theneuetimes/scenefly#readme",
+  "bugs": {
+    "url": "https://github.com/hxtnv/three-freecam/issues"
+  },
+  "homepage": "https://github.com/hxtnv/three-freecam#readme",
   "peerDependencies": {
     "three": ">=0.150.0"
   },
   "devDependencies": {
     "@types/three": "^0.185.0",
     "typescript": "^5.6.0"
-  }
+  },
+  "funding": "https://github.com/sponsors/hxtnv"
 }

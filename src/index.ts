@@ -1,2 +1,2 @@
-export { SceneFly } from "./scene-fly.js";
-export type { SceneFlyOptions, SceneFlyKeys } from "./scene-fly.js";
+export { FreeCam } from "./free-cam.js";
+export type { FreeCamOptions, FreeCamKeys } from "./free-cam.js";
