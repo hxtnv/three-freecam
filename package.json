@@ -1,6 +1,6 @@
 {
   "name": "three-freecam",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Unity scene-view camera controls for three.js. Right-drag to look, WASD to fly, middle-drag to pan, alt-drag to orbit.",
   "type": "module",
   "main": "./dist/index.js",
