@@ -15,16 +15,55 @@ npm i three-freecam
 
 ## Demo
 
-[video](https://github.com/user-attachments/assets/e120145d-ba64-429e-a774-79b15367efc2)
+https://github.com/user-attachments/assets/e120145d-ba64-429e-a774-79b15367efc2
 
-Run it locally: `npm run build`, then serve the repo root and open `examples/`.
+Run it yourself: clone the repo, `npm install && npm run build`, serve the repo root and open
+`examples/`. That file is a complete scene in 60 lines.
 
 ## Usage
 
 ```js
+new FreeCam(camera, domElement, options?)
+```
+
+| Argument | What to pass |
+| --- | --- |
+| `camera` | The camera you render with. `FreeCam` drives its `position` and `quaternion`; nothing else touches it. |
+| `domElement` | The element that receives mouse input — `renderer.domElement`, the canvas three.js renders into. Keyboard is listened for on `window`, so the canvas does not need focus. |
+| `options` | Optional, see [Options](#options). |
+
+Then call `update(dt)` once per frame, where `dt` is how many **seconds** the last frame took.
+
+### A complete scene
+
+Nothing here is specific to this library — it is the standard three.js setup, shown in full so it
+is clear where `camera`, `renderer` and `dt` come from.
+
+```js
+import * as THREE from "three";
 import { FreeCam } from "three-freecam";
 
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(
+  60,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  1000,
+);
+camera.position.set(5, 5, 10);
+
+scene.add(new THREE.GridHelper(50, 50));
+scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 2));
+
 const fly = new FreeCam(camera, renderer.domElement);
+
+// THREE.Clock measures the time between frames. getDelta() returns it in seconds
+// and resets, so call it exactly once per frame.
+const clock = new THREE.Clock();
 
 renderer.setAnimationLoop(() => {
   fly.update(clock.getDelta());
@@ -32,7 +71,30 @@ renderer.setAnimationLoop(() => {
 });
 ```
 
-That's the whole integration. `update(dt)` takes the frame delta in **seconds**.
+### Adding it to an app you already have
+
+Two lines, wherever your render loop lives:
+
+```js
+const fly = new FreeCam(camera, renderer.domElement);
+// ...inside the loop, before render():
+fly.update(deltaSeconds);
+```
+
+If your loop already tracks a delta, pass that. If it gives you **milliseconds**, divide by 1000.
+If it gives you nothing, keep a `THREE.Clock` as above.
+
+Using React Three Fiber:
+
+```jsx
+function Controls() {
+  const { camera, gl } = useThree();
+  const fly = useMemo(() => new FreeCam(camera, gl.domElement), [camera, gl]);
+  useEffect(() => () => fly.dispose(), [fly]);
+  useFrame((_, delta) => fly.update(delta));
+  return null;
+}
+```
 
 ## Controls
 
@@ -48,8 +110,9 @@ That's the whole integration. `update(dt)` takes the frame delta in **seconds**.
 | `Alt` + left-drag           | Orbit the pivot           |
 | `F`                         | Frame the pivot           |
 
-The pivot sits in front of the camera and follows it, so orbit and dolly work without you setting
-a target. Call `focus()` to move it somewhere specific.
+**The pivot** is the point orbit turns around and the wheel dollies toward. By default it sits a
+short way in front of the camera and follows it, so both work without you configuring anything.
+`focus()` moves it somewhere specific.
 
 ## Options
 
@@ -82,21 +145,30 @@ const fly = new FreeCam(camera, renderer.domElement, {
 | `pointerLock`    | `true`                | Locks the cursor while dragging, so the look never runs out of screen.                                                              |
 | `keys`           | WASD + QE + Shift + F | Partial override, by [`KeyboardEvent.code`](https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_code_values). |
 
-Every option is also a live property: `fly.moveSpeed = 40` works.
+Every option is also a live property, so you can change any of them at runtime:
+`fly.moveSpeed = 40`.
 
 ## API
 
 ```ts
 fly.update(dt)                      // once per frame, dt in seconds
-fly.focus(objectOrVector3, dist?)   // frame something; fits the bounding sphere
-fly.placeAt(position, lookAt?)      // teleport the camera
-fly.enabled = false                 // stop reading input, keep the listeners
-fly.pivot                           // Vector3, what orbit and dolly work against
+fly.focus(objectOrVector3, dist?)   // frame something
+fly.placeAt(position, lookAt?)      // jump the camera somewhere
+fly.enabled = false                 // ignore input without tearing anything down
+fly.pivot                           // Vector3 — what orbit and dolly work against
 fly.dispose()                       // remove every listener
 ```
 
+```js
+fly.focus(scene.getObjectByName("car")); // frames the whole car
+fly.placeAt(new THREE.Vector3(0, 30, 0), new THREE.Vector3(0, 0, 0)); // look down from above
+```
+
 `focus()` with an `Object3D` measures its bounding sphere and backs off far enough for the whole
-thing to fit the vertical FOV. With a `Vector3` it just aims at the point.
+thing to fit the vertical field of view. With a `Vector3` it just aims at that point.
+
+Call `dispose()` when the view goes away — the listeners are on `window`, so they outlive the
+canvas otherwise.
 
 ## Notes
 
