@@ -13,8 +13,6 @@ No dependencies, no UI, no assumptions about your render loop. Around 3 kB gzipp
 npm i three-freecam
 ```
 
-By [hxtnv](https://github.com/hxtnv) · [@hxtnv44](https://x.com/hxtnv44)
-
 ## Usage
 
 ```js
@@ -106,10 +104,7 @@ Works with `WebGLRenderer` and `WebGPURenderer` - it only ever touches `camera.p
 
 ## Credits
 
-Built by **hxtnv** — [github.com/hxtnv](https://github.com/hxtnv) · [x.com/hxtnv44](https://x.com/hxtnv44)
-
-If it saved you an afternoon, a star on the repo or a mention [@hxtnv44](https://x.com/hxtnv44) is
-very welcome.
+Built by **hxtnv** - [github.com/hxtnv](https://github.com/hxtnv) · [x.com/hxtnv44](https://x.com/hxtnv44)
 
 ## License
 
