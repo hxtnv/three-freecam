@@ -50,7 +50,7 @@ const fly = new SceneFly(camera, renderer.domElement, {
   lookSpeed: 0.0022,
   panSpeed: 0.0015,
   zoomSpeed: 0.12,
-  damping: 0.82,
+  damping: 0,
   invertY: false,
   pointerLock: true,
   keys: { up: ["KeyE"], down: ["KeyQ"] },
@@ -66,7 +66,7 @@ const fly = new SceneFly(camera, renderer.domElement, {
 | `zoomSpeed` | `0.12` | Fraction of the pivot distance per wheel notch. |
 | `speedStep` | `1.15` | Fly-speed multiplier per notch while looking. |
 | `moveSpeedRange` | `[0.1, 500]` | Clamp on `moveSpeed`. |
-| `damping` | `0.82` | `0` is instant, higher drifts. This is the one to raise for camera moves you intend to record. |
+| `damping` | `0` | Instant, like the editor. Raise it toward 1 for a drifting glide when recording. |
 | `invertY` | `false` | |
 | `maxPitch` | `~89°` | |
 | `pointerLock` | `true` | Locks the cursor while dragging, so the look never runs out of screen. |
@@ -90,8 +90,8 @@ thing to fit the vertical FOV. With a `Vector3` it just aims at the point.
 
 ## Notes
 
-Movement is smoothed with framerate-independent exponential damping, so the same `damping` feels
-the same at 30 and 144 fps. Set `damping: 0` if you want the camera to stop dead with the keys.
+Movement stops dead with the keys by default, same as the editor. `damping` above 0 smooths it with
+framerate-independent exponential decay, so the same value feels the same at 30 and 144 fps.
 
 Works with `WebGLRenderer` and `WebGPURenderer` — it only ever touches `camera.position` and
 `camera.quaternion`.

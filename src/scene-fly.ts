@@ -26,7 +26,10 @@ export interface SceneFlyOptions {
   /** How far a scroll while looking changes the fly speed, per notch. */
   speedStep?: number;
   moveSpeedRange?: [number, number];
-  /** 0 is instant, 1 is molasses. Around 0.85 gives the smooth drift you want on camera. */
+  /**
+   * Movement smoothing. 0 is instant, like the Unity scene view, and is the default. Raise it
+   * toward 1 for the drifting glide you want when recording a flythrough.
+   */
   damping?: number;
   /** Invert vertical look. */
   invertY?: boolean;
@@ -85,7 +88,6 @@ export class SceneFly {
   private readonly held = new Set<string>();
   private readonly euler = new Euler(0, 0, 0, "YXZ");
   private readonly velocity = new Vector3();
-  private readonly target = new Vector3();
   private readonly scratch = new Vector3();
 
   private drag: Drag = "none";
@@ -102,14 +104,13 @@ export class SceneFly {
     this.zoomSpeed = options.zoomSpeed ?? 0.12;
     this.speedStep = options.speedStep ?? 1.15;
     this.moveSpeedRange = options.moveSpeedRange ?? [0.1, 500];
-    this.damping = options.damping ?? 0.82;
+    this.damping = options.damping ?? 0;
     this.invertY = options.invertY ?? false;
     this.maxPitch = options.maxPitch ?? Math.PI / 2 - 0.01;
     this.pointerLock = options.pointerLock ?? true;
     this.keymap = { ...DEFAULT_KEYS, ...options.keys };
 
     this.euler.setFromQuaternion(camera.quaternion);
-    this.target.copy(camera.position);
     this.syncPivot();
 
     dom.addEventListener("pointerdown", this.onPointerDown);
@@ -143,11 +144,13 @@ export class SceneFly {
       move.y += vertical;
     }
 
-    // Exponential smoothing, framerate independent.
-    const k = this.damping <= 0 ? 1 : 1 - Math.pow(this.damping, dt * 60);
-    this.velocity.lerp(move, k);
-    this.target.addScaledVector(this.velocity, dt);
-    this.camera.position.lerp(this.target, k);
+    if (this.damping <= 0) {
+      this.velocity.copy(move);
+    } else {
+      // Framerate independent, so the same value feels the same at 30 and 144 fps.
+      this.velocity.lerp(move, 1 - Math.pow(this.damping, dt * 60));
+    }
+    this.camera.position.addScaledVector(this.velocity, dt);
 
     this.camera.quaternion.setFromEuler(this.euler);
     if (this.drag !== "orbit") this.syncPivot();
@@ -171,14 +174,12 @@ export class SceneFly {
       .set(0, 0, 1)
       .applyQuaternion(this.camera.quaternion)
       .multiplyScalar(this.pivotDistance);
-    this.target.copy(this.pivot).add(_offset);
-    this.camera.position.copy(this.target);
+    this.camera.position.copy(this.pivot).add(_offset);
     this.velocity.set(0, 0, 0);
   }
 
   /** Jumps the camera somewhere, optionally pointing it at a target. */
   placeAt(position: Vector3, lookAt?: Vector3): void {
-    this.target.copy(position);
     this.camera.position.copy(position);
     this.velocity.set(0, 0, 0);
     if (lookAt) {
@@ -243,7 +244,6 @@ export class SceneFly {
       this.scratch
         .set(-dx * scale, dy * scale, 0)
         .applyQuaternion(this.camera.quaternion);
-      this.target.add(this.scratch);
       this.camera.position.add(this.scratch);
       return;
     }
@@ -252,8 +252,7 @@ export class SceneFly {
     if (this.drag === "orbit") {
       _quat.setFromEuler(this.euler);
       _offset.set(0, 0, this.pivotDistance).applyQuaternion(_quat);
-      this.target.copy(this.pivot).add(_offset);
-      this.camera.position.copy(this.target);
+      this.camera.position.copy(this.pivot).add(_offset);
       this.velocity.set(0, 0, 0);
     }
   };
@@ -297,7 +296,7 @@ export class SceneFly {
       .set(0, 0, -1)
       .applyQuaternion(this.camera.quaternion)
       .multiplyScalar(step);
-    this.target.add(this.scratch);
+    this.camera.position.add(this.scratch);
     this.pivotDistance = Math.max(0.1, this.pivotDistance - step);
   };
 
