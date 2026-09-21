@@ -1,0 +1,50 @@
+{
+  "name": "scenefly",
+  "version": "0.1.0",
+  "description": "Unity scene-view camera controls for three.js. Right-drag to look, WASD to fly, middle-drag to pan, alt-drag to orbit.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "three",
+    "threejs",
+    "camera",
+    "controls",
+    "fly-controls",
+    "orbit-controls",
+    "unity",
+    "editor",
+    "scene-view",
+    "webgl",
+    "webgpu"
+  ],
+  "author": "theneuetimes",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/theneuetimes/scenefly.git"
+  },
+  "bugs": { "url": "https://github.com/theneuetimes/scenefly/issues" },
+  "homepage": "https://github.com/theneuetimes/scenefly#readme",
+  "peerDependencies": {
+    "three": ">=0.150.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.185.0",
+    "typescript": "^5.6.0"
+  }
+}

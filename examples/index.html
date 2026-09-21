@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>scenefly</title>
+    <style>
+      body { margin: 0; overflow: hidden; background: #111; font: 12px/1.6 ui-monospace, monospace; }
+      #help { position: fixed; left: 12px; bottom: 12px; color: #9ad; white-space: pre; }
+    </style>
+    <script type="importmap">
+      { "imports": { "three": "https://unpkg.com/three@0.185.0/build/three.module.js" } }
+    </script>
+  </head>
+  <body>
+    <div id="help">right-drag look · wasd fly · q/e down/up · shift boost
+middle-drag pan · wheel dolly · alt+left orbit · f focus</div>
+    <script type="module">
+      import * as THREE from "three";
+      import { SceneFly } from "../dist/index.js";
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(innerWidth, innerHeight);
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      document.body.appendChild(renderer.domElement);
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x11151c);
+      scene.fog = new THREE.Fog(0x11151c, 40, 160);
+
+      const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 500);
+      camera.position.set(14, 10, 18);
+
+      scene.add(new THREE.HemisphereLight(0x9fc6ff, 0x30302a, 2));
+      const sun = new THREE.DirectionalLight(0xfff1d0, 2.5);
+      sun.position.set(20, 30, 10);
+      scene.add(sun);
+      scene.add(new THREE.GridHelper(200, 100, 0x335, 0x223));
+
+      const geometry = new THREE.BoxGeometry(1, 1, 1);
+      const material = new THREE.MeshStandardMaterial({ color: 0x8fb7ff, roughness: 0.6 });
+      const blocks = new THREE.InstancedMesh(geometry, material, 400);
+      const m = new THREE.Matrix4();
+      for (let i = 0; i < blocks.count; i++) {
+        const h = 1 + Math.random() * 12;
+        m.makeScale(2 + Math.random() * 2, h, 2 + Math.random() * 2);
+        m.setPosition((Math.random() - 0.5) * 160, h / 2, (Math.random() - 0.5) * 160);
+        blocks.setMatrixAt(i, m);
+      }
+      blocks.instanceMatrix.needsUpdate = true;
+      blocks.computeBoundingSphere();
+      scene.add(blocks);
+
+      const fly = new SceneFly(camera, renderer.domElement, { moveSpeed: 16 });
+      fly.placeAt(new THREE.Vector3(40, 26, 46), new THREE.Vector3(0, 4, 0));
+      window.scenefly = { camera, fly, scene };
+
+      const clock = new THREE.Clock();
+      renderer.setAnimationLoop(() => {
+        fly.update(clock.getDelta());
+        renderer.render(scene, camera);
+      });
+
+      addEventListener("resize", () => {
+        camera.aspect = innerWidth / innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(innerWidth, innerHeight);
+      });
+    </script>
+  </body>
+</html>
