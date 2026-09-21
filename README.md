@@ -15,7 +15,7 @@ npm i three-freecam
 
 ## Demo
 
-[video](https://github.com/user-attachments/assets/26d79450-b3d2-473b-a3c1-6abc4881cab2)
+[video](https://github.com/user-attachments/assets/e120145d-ba64-429e-a774-79b15367efc2)
 
 Run it locally: `npm run build`, then serve the repo root and open `examples/`.
 
