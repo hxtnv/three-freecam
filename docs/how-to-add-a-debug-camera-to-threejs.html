@@ -1,0 +1,827 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>How to add a debug camera to Three.js</title>
+    <meta
+      name="description"
+      content="Add a Unity-style debug camera to a Three.js scene in three steps: install three-freecam, create FreeCam, call update(delta). Includes vanilla Three.js, React Three Fiber, WebGLRenderer and WebGPURenderer examples, a comparison with OrbitControls, FlyControls and PointerLockControls, and the limitations."
+    />
+    <link
+      rel="canonical"
+      href="https://hxtnv.github.io/three-freecam/how-to-add-a-debug-camera-to-threejs.html"
+    />
+    <meta name="author" content="hxtnv" />
+    <meta name="theme-color" content="#0b0e14" />
+
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="three-freecam" />
+    <meta property="og:title" content="How to add a debug camera to Three.js" />
+    <meta
+      property="og:description"
+      content="Install three-freecam, create FreeCam, call update(delta). With React Three Fiber, WebGPU, and an honest comparison against OrbitControls, FlyControls and PointerLockControls."
+    />
+    <meta
+      property="og:url"
+      content="https://hxtnv.github.io/three-freecam/how-to-add-a-debug-camera-to-threejs.html"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:creator" content="@hxtnv44" />
+    <meta name="twitter:title" content="How to add a debug camera to Three.js" />
+    <meta
+      name="twitter:description"
+      content="Three steps to a Unity-style debug camera in a Three.js scene, with code for vanilla, React Three Fiber, WebGL and WebGPU."
+    />
+
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b0e14'/%3E%3Cpath d='M6 12h12v11H6z' fill='none' stroke='%238fb7ff' stroke-width='2.2'/%3E%3Cpath d='M18 16l7-4v11l-7-4z' fill='%238fb7ff'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="./style.css" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        "name": "How to add a debug camera to Three.js",
+        "description": "Add a Unity-style debug camera to a Three.js scene using three-freecam.",
+        "totalTime": "PT5M",
+        "tool": [
+          { "@type": "HowToTool", "name": "Three.js version 0.150 or newer" },
+          { "@type": "HowToTool", "name": "npm" }
+        ],
+        "step": [
+          {
+            "@type": "HowToStep",
+            "position": 1,
+            "name": "Install three-freecam",
+            "text": "Run npm i three-freecam. It has no runtime dependencies and takes three as a peer dependency.",
+            "url": "https://hxtnv.github.io/three-freecam/how-to-add-a-debug-camera-to-threejs.html#step-1"
+          },
+          {
+            "@type": "HowToStep",
+            "position": 2,
+            "name": "Create a FreeCam",
+            "text": "Construct new FreeCam(camera, renderer.domElement) once, after the camera and renderer exist. Pass the canvas so mouse input is scoped to the viewport.",
+            "url": "https://hxtnv.github.io/three-freecam/how-to-add-a-debug-camera-to-threejs.html#step-2"
+          },
+          {
+            "@type": "HowToStep",
+            "position": 3,
+            "name": "Call update(delta) every frame",
+            "text": "Call fly.update(delta) once per frame before render, where delta is the frame time in seconds. Use THREE.Clock getDelta if your loop does not already track one.",
+            "url": "https://hxtnv.github.io/three-freecam/how-to-add-a-debug-camera-to-threejs.html#step-3"
+          }
+        ]
+      }
+    </script>
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What is a debug camera in Three.js?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A debug camera is a free-flying camera you use to inspect a scene rather than to present it: fly anywhere with WASD, look with the mouse, pass through geometry, and frame any object. It is the camera a game engine gives you in its editor viewport. Three.js does not ship one, so you either write it or add a library such as three-freecam."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "When should I use a debug camera instead of OrbitControls?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Use OrbitControls when the scene is one object the user looks at, such as a product viewer or a model preview. Use a debug camera when you need to get inside a large scene: check whether a mesh is floating, look behind a wall, find an object that ended up far off origin, or record a flythrough. OrbitControls always circles a target, so it cannot go anywhere the orbit does not reach."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How is three-freecam different from FlyControls?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "FlyControls is an aircraft-style camera: it rolls, it can tip over, and it has no pivot, no orbit and no object framing. three-freecam keeps the horizon level, clamps pitch near 90 degrees, and adds pan, orbit around a pivot and F to frame an object, which is what an editor viewport does."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How is three-freecam different from PointerLockControls?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "PointerLockControls takes the cursor for the whole session, which is correct for a first-person game and wrong for a tool that also has buttons and panels. three-freecam locks the pointer only while you hold the right mouse button, and it ships the movement, pan, orbit and framing that PointerLockControls leaves for you to write."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does a Three.js debug camera work with React Three Fiber?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Create the FreeCam in a useMemo from useThree camera and gl.domElement, call update in useFrame with the delta React Three Fiber gives you, and call dispose on unmount. Render it as a null component inside the Canvas."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does it work with WebGPURenderer?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. three-freecam writes only camera.position and camera.quaternion, so it does not know or care whether WebGLRenderer or WebGPURenderer draws the frame. The integration code is identical."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Why is my Three.js camera not moving?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Usually one of three things: update(delta) is not being called in the render loop, delta is in milliseconds rather than seconds, or something else writes camera.position after update runs, such as OrbitControls still being enabled or a lookAt call inside the loop. Pick one owner for the camera."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does a debug camera handle collision or gravity?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. A debug camera flies through walls on purpose, which is the point of it. If you need a camera that collides with the world you want a character controller, which is a different kind of library."
+            }
+          }
+        ]
+      }
+    </script>
+  </head>
+
+  <body>
+    <header class="topbar">
+      <a class="brand" href="./">three-freecam</a>
+      <nav>
+        <a href="./">Live demo</a>
+        <a href="./how-to-add-a-debug-camera-to-threejs.html" aria-current="page">Guide</a>
+        <a href="#faq">Questions</a>
+        <a href="https://www.npmjs.com/package/three-freecam" rel="noopener">npm</a>
+        <a href="https://github.com/hxtnv/three-freecam" rel="noopener">GitHub</a>
+      </nav>
+    </header>
+
+    <main class="page">
+      <h1>How to add a debug camera to Three.js</h1>
+
+      <p class="lede">
+        Three.js ships <code>OrbitControls</code>, <code>FlyControls</code> and
+        <code>PointerLockControls</code>, and none of them is the camera you get in a game
+        engine's editor viewport. This page shows how to add that camera in three steps,
+        with code for vanilla Three.js, React Three Fiber, <code>WebGLRenderer</code> and
+        <code>WebGPURenderer</code>, and an honest list of what it will not do.
+      </p>
+
+      <div class="badges">
+        <img
+          src="https://img.shields.io/npm/v/three-freecam?color=cb3837&amp;logo=npm&amp;label=npm"
+          alt="Latest version of three-freecam on npm"
+          width="94"
+          height="20"
+          loading="lazy"
+        />
+        <img
+          src="https://img.shields.io/bundlephobia/minzip/three-freecam?label=minzip&amp;color=blue"
+          alt="Minified and gzipped size of three-freecam"
+          width="110"
+          height="20"
+          loading="lazy"
+        />
+        <img
+          src="https://img.shields.io/badge/dependencies-0-brightgreen"
+          alt="three-freecam has zero runtime dependencies"
+          width="110"
+          height="20"
+          loading="lazy"
+        />
+      </div>
+
+      <div class="actions">
+        <a class="btn btn-primary" href="./">Try the live demo</a>
+        <a class="btn" href="https://www.npmjs.com/package/three-freecam" rel="noopener"
+          >Install from npm</a
+        >
+        <a class="btn" href="https://github.com/hxtnv/three-freecam" rel="noopener"
+          >View source</a
+        >
+      </div>
+
+      <h2 id="what-is-a-debug-camera">What a debug camera is</h2>
+
+      <p>
+        A debug camera is a free-flying camera you use to <em>inspect</em> a scene rather
+        than to present it. You fly with WASD, look with the mouse, pass straight through
+        geometry, and frame any object on a keypress. Unity calls it the scene view,
+        Unreal calls it the editor viewport, and in games it is usually called noclip,
+        freecam or spectator mode.
+      </p>
+
+      <p>
+        You want one the moment a scene stops being a single object on a turntable: to
+        check whether a mesh is really floating, to look behind a wall, to find the thing
+        that ended up at <code>(0, -4000, 0)</code>, or to record a flythrough. Three.js
+        does not ship one, so you either write it or add a library.
+        <a href="https://github.com/hxtnv/three-freecam">three-freecam</a> is that library,
+        at 1.81 kB minified and gzipped with no dependencies, and the rest of this page
+        uses it.
+      </p>
+
+      <h2 id="step-1">Step 1: install three-freecam</h2>
+
+      <pre><code>npm i three-freecam</code></pre>
+
+      <p>
+        <code>three</code> is a peer dependency, so the library uses the copy of Three.js
+        you already have. Any version from 0.150 works. There are no other dependencies.
+      </p>
+
+      <p>No build step? Use an import map and a CDN:</p>
+
+      <pre><code>&lt;script type="importmap"&gt;
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.186.0/build/three.module.js",
+    "three-freecam": "https://unpkg.com/three-freecam@0.1.1/dist/index.js"
+  }
+}
+&lt;/script&gt;</code></pre>
+
+      <h2 id="step-2">Step 2: create a FreeCam</h2>
+
+      <p>
+        Construct it once, after the camera and the renderer exist. It takes the camera it
+        should drive and the element that should receive mouse input, which is almost
+        always the canvas Three.js renders into.
+      </p>
+
+      <pre><code>import { FreeCam } from "three-freecam";
+
+const fly = new FreeCam(camera, renderer.domElement);</code></pre>
+
+      <p>
+        Passing the canvas rather than <code>document</code> keeps right-drag and the
+        wheel scoped to the viewport, so the rest of your page still scrolls and still has
+        a context menu. Keyboard input is listened for on <code>window</code>, so the
+        canvas does not need focus for WASD to work.
+      </p>
+
+      <p>Options are all optional, and all of them are live properties afterwards:</p>
+
+      <pre><code>const fly = new FreeCam(camera, renderer.domElement, {
+  moveSpeed: 12,      // world units per second
+  boost: 4,           // multiplier while Shift is held
+  lookSpeed: 0.0022,  // radians per pixel
+  damping: 0,         // 0 is instant, like the editor
+  invertY: false,
+  pointerLock: true,  // only while dragging, not for the whole session
+  keys: { forward: ["KeyW"], back: ["KeyS"] },
+});
+
+fly.moveSpeed = 40; // change anything at any time</code></pre>
+
+      <h2 id="step-3">Step 3: call update(delta) every frame</h2>
+
+      <p>
+        One line in the render loop, before <code>render()</code>.
+        <code>delta</code> is how many <strong>seconds</strong> the last frame took.
+      </p>
+
+      <pre><code>renderer.setAnimationLoop(() =&gt; {
+  fly.update(delta);
+  renderer.render(scene, camera);
+});</code></pre>
+
+      <p>
+        If your loop already tracks a delta, pass that. If it gives you
+        <strong>milliseconds</strong>, divide by 1000. If it gives you nothing, keep a
+        <code>THREE.Clock</code>: <code>clock.getDelta()</code> returns seconds since the
+        last call and resets, so call it exactly once per frame.
+      </p>
+
+      <p>That is the whole integration. Right-drag the canvas and fly.</p>
+
+      <h2 id="controls">The controls you get</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Input</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Right-drag</td><td>Look around</td></tr>
+          <tr><td><code>W A S D</code> or arrows</td><td>Fly, while looking or not</td></tr>
+          <tr><td><code>Q</code> / <code>E</code></td><td>Down / up, on the world vertical</td></tr>
+          <tr><td><code>Shift</code></td><td>Boost</td></tr>
+          <tr><td>Wheel while right-dragging</td><td>Change fly speed</td></tr>
+          <tr><td>Middle-drag</td><td>Pan</td></tr>
+          <tr><td>Wheel</td><td>Dolly toward the pivot</td></tr>
+          <tr><td><code>Alt</code> + left-drag</td><td>Orbit the pivot</td></tr>
+          <tr><td><code>F</code></td><td>Frame the pivot</td></tr>
+        </tbody>
+      </table>
+
+      <p>
+        The <strong>pivot</strong> is the point orbit turns around and the wheel dollies
+        toward. By default it sits a short way in front of the camera and follows it, so
+        both work with no setup. <code>fly.focus(object)</code> moves it onto something and
+        backs the camera off far enough to see the whole thing.
+      </p>
+
+      <p>
+        Plain left-drag is deliberately left alone, so your own picking, gizmos and
+        selection keep working while the debug camera is live.
+      </p>
+
+      <h2 id="vs-other-controls">
+        How it differs from OrbitControls, FlyControls and PointerLockControls
+      </h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th>three-freecam</th>
+            <th>OrbitControls</th>
+            <th>FlyControls</th>
+            <th>PointerLockControls</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Goes anywhere in the scene</td>
+            <td class="yes">yes</td>
+            <td class="no">no, always circles a target</td>
+            <td class="yes">yes</td>
+            <td class="yes">yes</td>
+          </tr>
+          <tr>
+            <td>Can also orbit a target</td>
+            <td class="yes">yes, alt-drag</td>
+            <td class="yes">yes, that is all it does</td>
+            <td class="no">no</td>
+            <td class="no">no</td>
+          </tr>
+          <tr>
+            <td>WASD flight built in</td>
+            <td class="yes">yes</td>
+            <td class="no">no</td>
+            <td class="yes">yes</td>
+            <td class="no">no, you write the movement</td>
+          </tr>
+          <tr>
+            <td>Left mouse stays free for your app</td>
+            <td class="yes">yes</td>
+            <td class="no">no, it is the orbit drag</td>
+            <td class="yes">yes</td>
+            <td class="no">no, it captures everything</td>
+          </tr>
+          <tr>
+            <td>Speed changed on the fly</td>
+            <td class="yes">yes, wheel while looking</td>
+            <td class="no">not applicable</td>
+            <td class="no">no, set movementSpeed</td>
+            <td class="no">you write it</td>
+          </tr>
+          <tr>
+            <td>Frame an object</td>
+            <td class="yes">yes, focus() and F</td>
+            <td class="no">no</td>
+            <td class="no">no</td>
+            <td class="no">no</td>
+          </tr>
+          <tr>
+            <td>Cursor stays usable</td>
+            <td class="yes">yes, locked only while dragging</td>
+            <td class="yes">yes</td>
+            <td class="yes">yes</td>
+            <td class="no">no, locked until Escape</td>
+          </tr>
+          <tr>
+            <td>Roll</td>
+            <td>never, horizon stays level</td>
+            <td>never</td>
+            <td>yes, it can tip over</td>
+            <td>never</td>
+          </tr>
+          <tr>
+            <td>Size</td>
+            <td>1.81 kB minzipped</td>
+            <td>bundled with three</td>
+            <td>bundled with three</td>
+            <td>bundled with three</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Use OrbitControls when</h3>
+      <p>
+        The scene is one object and the user is looking <em>at</em> it: a product viewer, a
+        model preview, a configurator. Orbiting is the whole interaction and a fixed target
+        is a feature, not a limitation. Do not reach for a debug camera here.
+      </p>
+
+      <h3>Use FlyControls when</h3>
+      <p>
+        You want an aircraft or on-rails feel where roll is wanted and the camera is
+        expected to tip over. It has no pivot, no orbit, no object framing, and its speed
+        is a property you set rather than something the user dials in mid-flight.
+      </p>
+
+      <h3>Use PointerLockControls when</h3>
+      <p>
+        You are building a first-person <em>game</em>. It takes the cursor for the entire
+        session, which is exactly right for gameplay and exactly wrong for a tool that also
+        has buttons, panels and a DOM UI. It also gives you pointer look only: the movement
+        is yours to write.
+      </p>
+
+      <h3>Use a debug camera when</h3>
+      <p>
+        You want the camera from an editor viewport: inspect a large scene, debug
+        placement, fly to a corner, then alt-drag around the thing you found and press
+        <code>F</code> to frame it. That combination, where look, fly, pan, orbit and
+        framing share one pivot and left-click is still yours, is the gap the other three
+        leave.
+      </p>
+
+      <h3>You can keep both</h3>
+      <p>
+        A debug camera does not have to replace your normal controls. Ship
+        <code>OrbitControls</code> to your users and put the debug camera behind a key:
+      </p>
+
+      <pre><code>const fly = new FreeCam(camera, renderer.domElement);
+fly.enabled = false;
+
+addEventListener("keydown", (e) =&gt; {
+  if (e.code !== "Backquote") return;
+  fly.enabled = !fly.enabled;
+  orbit.enabled = !fly.enabled;
+});</code></pre>
+
+      <p>
+        <code>enabled</code> only gates input, so nothing is torn down and flipping it back
+        resumes where you left off.
+      </p>
+
+      <h2 id="examples">Complete examples</h2>
+
+      <h3 id="vanilla">Vanilla Three.js with WebGLRenderer</h3>
+
+      <p>
+        Everything below except the two <code>FreeCam</code> lines is the standard Three.js
+        setup, shown in full so it is clear where <code>camera</code>,
+        <code>renderer</code> and <code>delta</code> come from.
+      </p>
+
+      <pre><code>import * as THREE from "three";
+import { FreeCam } from "three-freecam";
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(
+  60,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  1000,
+);
+camera.position.set(5, 5, 10);
+
+scene.add(new THREE.GridHelper(50, 50));
+scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 2));
+
+// The debug camera. Two lines.
+const fly = new FreeCam(camera, renderer.domElement, { moveSpeed: 16 });
+
+const clock = new THREE.Clock();
+
+renderer.setAnimationLoop(() =&gt; {
+  fly.update(clock.getDelta()); // seconds since the last frame
+  renderer.render(scene, camera);
+});
+
+window.addEventListener("resize", () =&gt; {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});</code></pre>
+
+      <h3 id="webgpu">WebGPURenderer</h3>
+
+      <p>
+        Identical, because the debug camera writes <code>camera.position</code> and
+        <code>camera.quaternion</code> and nothing else. It never touches the renderer, so
+        it has no opinion about which one draws the frame.
+      </p>
+
+      <pre><code>import * as THREE from "three/webgpu";
+import { FreeCam } from "three-freecam";
+
+const renderer = new THREE.WebGPURenderer({ antialias: true });
+await renderer.init();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+const fly = new FreeCam(camera, renderer.domElement);
+const clock = new THREE.Clock();
+
+renderer.setAnimationLoop(() =&gt; {
+  fly.update(clock.getDelta());
+  renderer.render(scene, camera);
+});</code></pre>
+
+      <h3 id="r3f">React Three Fiber</h3>
+
+      <p>
+        A null component inside the <code>&lt;Canvas&gt;</code>.
+        <code>useFrame</code> already hands you a delta in seconds, and the only thing to
+        remember is <code>dispose()</code> on unmount, because the keyboard listeners live
+        on <code>window</code> and would otherwise outlive the canvas.
+      </p>
+
+      <pre><code>import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { useEffect, useMemo } from "react";
+import { FreeCam } from "three-freecam";
+
+function DebugCamera({ enabled = true, ...options }) {
+  const { camera, gl } = useThree();
+
+  const fly = useMemo(
+    () =&gt; new FreeCam(camera, gl.domElement, options),
+    [camera, gl], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  useEffect(() =&gt; () =&gt; fly.dispose(), [fly]);
+  useEffect(() =&gt; {
+    fly.enabled = enabled;
+  }, [fly, enabled]);
+
+  useFrame((_, delta) =&gt; fly.update(delta));
+
+  return null;
+}
+
+export default function App() {
+  return (
+    &lt;Canvas camera={{ position: [5, 5, 10], fov: 60 }}&gt;
+      &lt;gridHelper args={[50, 50]} /&gt;
+      &lt;hemisphereLight intensity={2} /&gt;
+      {import.meta.env.DEV &amp;&amp; &lt;DebugCamera moveSpeed={16} /&gt;}
+    &lt;/Canvas&gt;
+  );
+}</code></pre>
+
+      <p>
+        Gating on <code>import.meta.env.DEV</code> means the debug camera is a development
+        tool and never reaches production. If you use Drei's
+        <code>&lt;OrbitControls /&gt;</code> as well, give it
+        <code>enabled={!debugging}</code> so only one of them owns the camera at a time.
+      </p>
+
+      <h3 id="api">The rest of the API</h3>
+
+      <pre><code>fly.update(dt);                        // once per frame, dt in seconds
+fly.focus(object);                     // frame an Object3D, measured from its bounds
+fly.focus(new THREE.Vector3(0, 2, 0)); // or just aim at a point
+fly.placeAt(position, lookAt);         // jump the camera somewhere
+fly.enabled = false;                   // ignore input, tear nothing down
+fly.pivot;                             // Vector3, what orbit and dolly work against
+fly.dispose();                         // remove every listener</code></pre>
+
+      <p>Two things worth knowing:</p>
+
+      <ul>
+        <li>
+          <code>focus()</code> with an <code>Object3D</code> measures its bounding sphere
+          and backs off far enough for the whole thing to fit the vertical field of view.
+          With a <code>Vector3</code> it just aims at that point. <code>F</code> calls it
+          on the current pivot.
+        </li>
+        <li>
+          <code>dispose()</code> matters. The keyboard and pointer-move listeners are on
+          <code>window</code>, so they outlive the canvas if you do not call it.
+        </li>
+      </ul>
+
+      <h2 id="limitations">Limitations, honestly</h2>
+
+      <p>
+        Stated plainly, so you can tell in a minute whether this fits rather than finding
+        out in an hour.
+      </p>
+
+      <ul>
+        <li>
+          <strong>No touch or pointer-gesture support.</strong> It is a mouse and keyboard
+          tool, which is what a debug camera normally is. Touch is not on the roadmap. The
+          demo on this site does nothing useful on a phone.
+        </li>
+        <li>
+          <strong>Pan needs a middle mouse button.</strong> There is no built-in trackpad
+          fallback. Look, fly, orbit and dolly are all fine without one.
+        </li>
+        <li>
+          <strong>No collision, gravity or clipping.</strong> It flies through geometry by
+          design. If you need a camera that collides with the world, you want a character
+          controller, which is a different kind of library.
+        </li>
+        <li>
+          <strong>No roll.</strong> Pitch is clamped near 90 degrees and the horizon stays
+          level. If you want a camera that can tip over, <code>FlyControls</code> is the
+          right tool.
+        </li>
+        <li>
+          <strong><code>focus()</code> assumes a perspective camera.</strong> The framing
+          maths reads <code>fov</code>. Everything else works with any camera; an
+          <code>OrthographicCamera</code> just needs an explicit distance.
+        </li>
+        <li>
+          <strong>It writes the camera every frame.</strong> Anything that moves the same
+          camera after <code>update()</code> wins, so pick one owner. This is the usual
+          cause of "my camera does not move".
+        </li>
+        <li>
+          <strong>No easing on <code>focus()</code> or <code>placeAt()</code>.</strong>
+          They jump. Tween them yourself if you want a glide.
+        </li>
+        <li>
+          <strong>No saved viewpoints, gizmo, minimap or UI.</strong> By design. That is
+          how it stays at 1.81 kB.
+        </li>
+        <li>
+          <strong>Keys are physical, not layout-aware.</strong> It uses
+          <code>KeyboardEvent.code</code>, so <code>KeyW</code> is the same physical key on
+          AZERTY. Remap it yourself if you want <code>ZQSD</code>.
+        </li>
+      </ul>
+
+      <h2 id="faq">Questions</h2>
+
+      <details class="faq">
+        <summary>What is a debug camera in Three.js?</summary>
+        <div class="answer">
+          A free-flying camera you use to inspect a scene rather than present it: fly
+          anywhere with WASD, look with the mouse, pass through geometry, frame any object.
+          It is the camera a game engine gives you in its editor viewport. Three.js does
+          not ship one, so you either write it or add a library.
+        </div>
+      </details>
+
+      <details class="faq">
+        <summary>When should I use this instead of OrbitControls?</summary>
+        <div class="answer">
+          Use <code>OrbitControls</code> when the scene is one object the user looks at: a
+          product viewer, a model preview, a configurator. Use a debug camera when you need
+          to get inside a large scene, because <code>OrbitControls</code> always circles a
+          target and cannot go where the orbit does not reach.
+        </div>
+      </details>
+
+      <details class="faq">
+        <summary>How is it different from FlyControls?</summary>
+        <div class="answer">
+          <code>FlyControls</code> is aircraft-style: it rolls, it can tip over, and it has
+          no pivot, no orbit and no object framing. three-freecam keeps the horizon level,
+          clamps pitch, and adds pan, orbit around a pivot, and <code>F</code> to frame an
+          object, which is what an editor viewport does.
+        </div>
+      </details>
+
+      <details class="faq">
+        <summary>How is it different from PointerLockControls?</summary>
+        <div class="answer">
+          <code>PointerLockControls</code> takes the cursor for the whole session, which is
+          right for a first-person game and wrong for a tool with buttons and panels.
+          three-freecam locks the pointer only while the right button is held, and it ships
+          the movement, pan, orbit and framing that <code>PointerLockControls</code> leaves
+          for you to write.
+        </div>
+      </details>
+
+      <details class="faq">
+        <summary>Does it work with React Three Fiber?</summary>
+        <div class="answer">
+          Yes, see the <a href="#r3f">React Three Fiber example</a> above.
+          <code>useFrame</code> gives you the delta already; just remember
+          <code>dispose()</code> on unmount.
+        </div>
+      </details>
+
+      <details class="faq">
+        <summary>Does it work with WebGPURenderer?</summary>
+        <div class="answer">
+          Yes, and the code is identical to the WebGL version. It writes
+          <code>camera.position</code> and <code>camera.quaternion</code> and nothing else,
+          so the renderer behind it makes no difference.
+        </div>
+      </details>
+
+      <details class="faq">
+        <summary>Which Three.js versions are supported?</summary>
+        <div class="answer">
+          <code>three</code> is a peer dependency, <code>&gt;=0.150.0</code>. CI runs the
+          test suite against 0.150, 0.168 and the latest release on every push, so the
+          declared range is actually tested rather than hopeful.
+        </div>
+      </details>
+
+      <details class="faq">
+        <summary>Why is my camera not moving?</summary>
+        <div class="answer">
+          Almost always one of three things. <code>update(delta)</code> is not being called
+          in the loop. <code>delta</code> is in milliseconds rather than seconds, which
+          makes everything 1000 times too fast rather than too slow. Or something else
+          writes <code>camera.position</code> after <code>update</code> runs, such as
+          <code>OrbitControls</code> still being enabled or a <code>lookAt</code> inside
+          your loop.
+        </div>
+      </details>
+
+      <details class="faq">
+        <summary>How do I change the keys?</summary>
+        <div class="answer">
+          <p>
+            Pass <code>keys</code>, using
+            <a
+              href="https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_code_values"
+              rel="noopener"
+              >KeyboardEvent.code</a
+            >
+            values. It is a partial override, so anything you leave out keeps its default.
+          </p>
+          <pre><code>new FreeCam(camera, dom, {
+  keys: { forward: ["KeyZ"], left: ["KeyQ"] },
+});</code></pre>
+        </div>
+      </details>
+
+      <details class="faq">
+        <summary>Can I use it for a cinematic flythrough?</summary>
+        <div class="answer">
+          Yes, that is what <code>damping</code> is for. <code>0</code> is the editor feel,
+          instant on and instant off. Raise it toward <code>1</code> for a weighted glide,
+          which records much better. The smoothing is framerate independent, so the same
+          value behaves the same at 30 and 144 fps. Try the
+          <a href="./">damping slider in the demo</a>.
+        </div>
+      </details>
+
+      <details class="faq">
+        <summary>Does it handle collision, gravity or clipping?</summary>
+        <div class="answer">
+          No, and it will not. A debug camera flies through walls on purpose. If you need a
+          camera that collides with the world, you want a character controller.
+        </div>
+      </details>
+
+      <details class="faq">
+        <summary>Is it TypeScript-friendly and tree-shakeable?</summary>
+        <div class="answer">
+          Both. It is written in TypeScript and ships its own declarations, exporting
+          <code>FreeCam</code>, <code>FreeCamOptions</code> and <code>FreeCamKeys</code>.
+          The package is ESM only with <code>sideEffects: false</code>, so a bundler drops
+          it entirely if you do not import it.
+        </div>
+      </details>
+
+      <details class="faq">
+        <summary>How do I ship it in development only?</summary>
+        <div class="answer">
+          Import it behind your bundler's dev flag, for example
+          <code>import.meta.env.DEV</code> in Vite, and construct it only in that branch.
+          It is 1.81 kB, so shipping it to production is not expensive either, in which
+          case put it behind a hotkey with <code>fly.enabled</code>.
+        </div>
+      </details>
+
+      <hr />
+
+      <div class="actions">
+        <a class="btn btn-primary" href="./">Try the live demo</a>
+        <a class="btn" href="https://www.npmjs.com/package/three-freecam" rel="noopener"
+          >Install from npm</a
+        >
+        <a class="btn" href="https://github.com/hxtnv/three-freecam" rel="noopener"
+          >View source</a
+        >
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      three-freecam is MIT licensed, built by
+      <a href="https://github.com/hxtnv" rel="noopener">hxtnv</a>.
+      <a href="https://github.com/hxtnv/three-freecam/issues" rel="noopener"
+        >Report an issue</a
+      >.
+    </footer>
+  </body>
+</html>

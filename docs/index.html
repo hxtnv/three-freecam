@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>three-freecam live demo: a debug camera for Three.js</title>
+    <meta
+      name="description"
+      content="Live demo of three-freecam, a debug camera for Three.js with Unity-style editor scene-view controls. Right-drag to look, WASD to fly, middle-drag to pan, alt-drag to orbit, F to frame. 1.8 kB, no dependencies."
+    />
+    <link rel="canonical" href="https://hxtnv.github.io/three-freecam/" />
+    <meta name="author" content="hxtnv" />
+    <meta name="theme-color" content="#0b0e14" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="three-freecam" />
+    <meta
+      property="og:title"
+      content="three-freecam live demo: a debug camera for Three.js"
+    />
+    <meta
+      property="og:description"
+      content="Fly through a Three.js scene with Unity-style editor camera controls. Right-drag to look, WASD to fly, alt-drag to orbit, F to frame."
+    />
+    <meta property="og:url" content="https://hxtnv.github.io/three-freecam/" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:creator" content="@hxtnv44" />
+    <meta
+      name="twitter:title"
+      content="three-freecam live demo: a debug camera for Three.js"
+    />
+    <meta
+      name="twitter:description"
+      content="Fly through a Three.js scene with Unity-style editor camera controls, live in your browser."
+    />
+
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b0e14'/%3E%3Cpath d='M6 12h12v11H6z' fill='none' stroke='%238fb7ff' stroke-width='2.2'/%3E%3Cpath d='M18 16l7-4v11l-7-4z' fill='%238fb7ff'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="./style.css" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareSourceCode",
+        "name": "three-freecam",
+        "alternateName": "Three.js debug camera",
+        "description": "A debug camera for Three.js. Editor-style scene-view controls: right-drag to look, WASD to fly, middle-drag to pan, alt-drag to orbit, wheel to dolly, F to frame. 1.81 kB minified and gzipped, no dependencies.",
+        "url": "https://hxtnv.github.io/three-freecam/",
+        "codeRepository": "https://github.com/hxtnv/three-freecam",
+        "programmingLanguage": "TypeScript",
+        "runtimePlatform": "Web browser",
+        "license": "https://opensource.org/licenses/MIT",
+        "author": { "@type": "Person", "name": "hxtnv", "url": "https://github.com/hxtnv" },
+        "keywords": "three.js, debug camera, editor camera, free camera, freecam, noclip, scene view, WASD camera, fly camera, spectator camera, WebGL, WebGPU"
+      }
+    </script>
+
+    <style>
+      /* The demo page is a full-viewport canvas with floating panels over it. */
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+      }
+
+      #canvas-host {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+      }
+
+      #canvas-host canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+      }
+
+      .overlay {
+        position: fixed;
+        z-index: 10;
+        background: rgba(12, 16, 24, 0.82);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+      }
+
+      /* Masthead */
+
+      #masthead {
+        top: 16px;
+        left: 16px;
+        max-width: min(380px, calc(100vw - 32px));
+        padding: 16px 18px;
+      }
+
+      #masthead h1 {
+        margin: 0;
+        font-size: 19px;
+        font-family: var(--mono);
+        letter-spacing: -0.02em;
+      }
+
+      #masthead p {
+        margin: 7px 0 0;
+        font-size: 13.5px;
+        color: var(--text-dim);
+        line-height: 1.5;
+      }
+
+      #masthead .links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin-top: 13px;
+      }
+
+      #masthead .links a {
+        font-size: 13px;
+        padding: 6px 11px;
+        border-radius: 7px;
+        border: 1px solid var(--border-strong);
+        color: var(--text);
+      }
+
+      #masthead .links a:hover {
+        border-color: var(--accent);
+        color: var(--accent-strong);
+        text-decoration: none;
+      }
+
+      #masthead .links a.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #0b0e14;
+        font-weight: 600;
+      }
+
+      #masthead .install {
+        margin-top: 12px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--accent);
+        background: var(--bg-sunken);
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        padding: 7px 10px;
+        cursor: pointer;
+        user-select: all;
+      }
+
+      /* Controls legend */
+
+      #legend {
+        left: 16px;
+        bottom: 16px;
+        padding: 13px 16px;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        line-height: 1.85;
+        color: var(--text-dim);
+        max-width: calc(100vw - 32px);
+      }
+
+      #legend b {
+        color: var(--accent);
+        font-weight: 600;
+      }
+
+      /* Settings panel */
+
+      #settings {
+        top: 16px;
+        right: 16px;
+        width: 250px;
+        padding: 14px 16px;
+        font-size: 13px;
+        max-width: calc(100vw - 32px);
+      }
+
+      #settings h2 {
+        margin: 0 0 10px;
+        font-size: 12px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--text-faint);
+        font-weight: 600;
+      }
+
+      .field {
+        margin-bottom: 11px;
+      }
+
+      .field label {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        color: var(--text-dim);
+        margin-bottom: 4px;
+      }
+
+      .field label output {
+        font-family: var(--mono);
+        color: var(--accent);
+      }
+
+      .field input[type="range"] {
+        width: 100%;
+        accent-color: var(--accent);
+        height: 18px;
+      }
+
+      .field.row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text-dim);
+      }
+
+      .field.row input {
+        accent-color: var(--accent);
+      }
+
+      #settings .buttons {
+        display: flex;
+        gap: 6px;
+        margin-top: 12px;
+      }
+
+      #settings .buttons button {
+        flex: 1;
+        padding: 7px 0;
+        font-size: 12.5px;
+        border-radius: 7px;
+        border: 1px solid var(--border-strong);
+        background: var(--bg-raised);
+        color: var(--text);
+        cursor: pointer;
+        font-family: inherit;
+      }
+
+      #settings .buttons button:hover {
+        border-color: var(--accent);
+        color: var(--accent-strong);
+      }
+
+      #readout {
+        margin-top: 12px;
+        padding-top: 10px;
+        border-top: 1px solid var(--border);
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--text-faint);
+        line-height: 1.7;
+      }
+
+      /* Touch and small-screen notice */
+
+      #notice {
+        left: 50%;
+        bottom: 16px;
+        transform: translateX(-50%);
+        padding: 11px 16px;
+        font-size: 13px;
+        color: var(--warn);
+        text-align: center;
+        max-width: calc(100vw - 32px);
+        display: none;
+      }
+
+      @media (max-width: 860px), (pointer: coarse) {
+        #settings,
+        #legend {
+          display: none;
+        }
+        #notice {
+          display: block;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="canvas-host" aria-hidden="true"></div>
+
+    <header id="masthead" class="overlay">
+      <h1>three-freecam</h1>
+      <p>
+        A debug camera for Three.js. Editor-style scene-view controls, the way Unity,
+        Unreal and Godot do it. Right-drag this page and fly.
+      </p>
+      <div class="install" title="Click to select, then copy">npm i three-freecam</div>
+      <div class="links">
+        <a
+          class="primary"
+          href="./how-to-add-a-debug-camera-to-threejs.html"
+          >Read the guide</a
+        >
+        <a href="https://www.npmjs.com/package/three-freecam" rel="noopener">npm</a>
+        <a href="https://github.com/hxtnv/three-freecam" rel="noopener">Source</a>
+      </div>
+    </header>
+
+    <aside id="settings" class="overlay">
+      <h2>Live options</h2>
+
+      <div class="field">
+        <label for="moveSpeed">moveSpeed <output id="moveSpeedOut">16</output></label>
+        <input id="moveSpeed" type="range" min="1" max="120" step="1" value="16" />
+      </div>
+
+      <div class="field">
+        <label for="damping">damping <output id="dampingOut">0.00</output></label>
+        <input id="damping" type="range" min="0" max="0.95" step="0.05" value="0" />
+      </div>
+
+      <div class="field">
+        <label for="lookSpeed">lookSpeed <output id="lookSpeedOut">0.0022</output></label>
+        <input
+          id="lookSpeed"
+          type="range"
+          min="0.0005"
+          max="0.008"
+          step="0.0001"
+          value="0.0022"
+        />
+      </div>
+
+      <div class="field row">
+        <input id="invertY" type="checkbox" />
+        <label for="invertY">invertY</label>
+      </div>
+
+      <div class="field row">
+        <input id="pointerLock" type="checkbox" checked />
+        <label for="pointerLock">pointerLock</label>
+      </div>
+
+      <div class="buttons">
+        <button id="focusTower" type="button">focus(tower)</button>
+        <button id="resetView" type="button">placeAt(start)</button>
+      </div>
+
+      <div id="readout">
+        <div>pos <span id="posOut">0, 0, 0</span></div>
+        <div>speed <span id="speedOut">16</span> u/s</div>
+      </div>
+    </aside>
+
+    <div id="legend" class="overlay">
+      <b>right-drag</b> look &middot; <b>wasd</b> fly &middot; <b>q/e</b> down/up &middot;
+      <b>shift</b> boost<br />
+      <b>middle-drag</b> pan &middot; <b>wheel</b> dolly &middot;
+      <b>wheel while looking</b> speed<br />
+      <b>alt + left-drag</b> orbit &middot; <b>f</b> frame the pivot
+    </div>
+
+    <div id="notice" class="overlay">
+      This demo needs a mouse and a keyboard. three-freecam is a desktop debug camera and
+      has no touch support.
+      <a href="./how-to-add-a-debug-camera-to-threejs.html">Read the guide instead.</a>
+    </div>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.186.0/build/three.module.js",
+          "three-freecam": "https://unpkg.com/three-freecam@0.1.1/dist/index.js"
+        }
+      }
+    </script>
+
+    <script type="module">
+      import * as THREE from "three";
+      import { FreeCam } from "three-freecam";
+
+      const host = document.getElementById("canvas-host");
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      renderer.setSize(innerWidth, innerHeight);
+      host.appendChild(renderer.domElement);
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0b0e14);
+      scene.fog = new THREE.Fog(0x0b0e14, 60, 260);
+
+      const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 600);
+
+      // Lighting: a cool sky bounce plus a warm key, enough to read shape without a
+      // texture in sight.
+      scene.add(new THREE.HemisphereLight(0x9fc6ff, 0x16181c, 1.9));
+      const sun = new THREE.DirectionalLight(0xfff1d0, 2.4);
+      sun.position.set(40, 60, 20);
+      scene.add(sun);
+
+      const grid = new THREE.GridHelper(400, 200, 0x2a3a52, 0x1a2230);
+      grid.material.transparent = true;
+      grid.material.opacity = 0.55;
+      scene.add(grid);
+
+      // A block city, one instanced mesh, so there is something with depth to fly through.
+      const blocks = new THREE.InstancedMesh(
+        new THREE.BoxGeometry(1, 1, 1),
+        new THREE.MeshStandardMaterial({ color: 0x8fb7ff, roughness: 0.65, metalness: 0.05 }),
+        520,
+      );
+      const matrix = new THREE.Matrix4();
+      const tint = new THREE.Color();
+      for (let i = 0; i < blocks.count; i++) {
+        const height = 2 + Math.pow(Math.random(), 2) * 34;
+        matrix.makeScale(2 + Math.random() * 3, height, 2 + Math.random() * 3);
+        matrix.setPosition(
+          (Math.random() - 0.5) * 300,
+          height / 2,
+          (Math.random() - 0.5) * 300,
+        );
+        blocks.setMatrixAt(i, matrix);
+        blocks.setColorAt(i, tint.setHSL(0.58 + Math.random() * 0.08, 0.35, 0.45 + Math.random() * 0.25));
+      }
+      blocks.instanceMatrix.needsUpdate = true;
+      if (blocks.instanceColor) blocks.instanceColor.needsUpdate = true;
+      blocks.computeBoundingSphere();
+      scene.add(blocks);
+
+      // One landmark, so focus() has something obvious to frame.
+      const tower = new THREE.Group();
+      tower.name = "tower";
+      const shaft = new THREE.Mesh(
+        new THREE.CylinderGeometry(3, 4.5, 46, 24),
+        new THREE.MeshStandardMaterial({ color: 0xf0c27b, roughness: 0.4, metalness: 0.2 }),
+      );
+      shaft.position.y = 23;
+      const cap = new THREE.Mesh(
+        new THREE.IcosahedronGeometry(6, 1),
+        new THREE.MeshStandardMaterial({
+          color: 0xffd9a0,
+          emissive: 0x6a4a18,
+          roughness: 0.3,
+        }),
+      );
+      cap.position.y = 50;
+      tower.add(shaft, cap);
+      scene.add(tower);
+
+      const START_POSITION = new THREE.Vector3(62, 38, 74);
+      const START_TARGET = new THREE.Vector3(0, 12, 0);
+
+      const fly = new FreeCam(camera, renderer.domElement, { moveSpeed: 16 });
+      fly.placeAt(START_POSITION.clone(), START_TARGET.clone());
+
+      // Handy for anyone who opens the console to poke at it.
+      window.demo = { THREE, scene, camera, renderer, fly, tower };
+
+      // Wire the live options panel. Every option is a plain property, so this is all it takes.
+      const bind = (id, apply, format) => {
+        const input = document.getElementById(id);
+        const out = document.getElementById(`${id}Out`);
+        if (!input) return;
+        const sync = () => {
+          const value =
+            input.type === "checkbox" ? input.checked : Number.parseFloat(input.value);
+          apply(value);
+          if (out) out.textContent = format ? format(value) : String(value);
+        };
+        input.addEventListener("input", sync);
+        sync();
+      };
+
+      bind("moveSpeed", (v) => (fly.moveSpeed = v), (v) => v.toFixed(0));
+      bind("damping", (v) => (fly.damping = v), (v) => v.toFixed(2));
+      bind("lookSpeed", (v) => (fly.lookSpeed = v), (v) => v.toFixed(4));
+      bind("invertY", (v) => (fly.invertY = v));
+      bind("pointerLock", (v) => (fly.pointerLock = v));
+
+      document.getElementById("focusTower").addEventListener("click", () => {
+        fly.focus(tower);
+      });
+
+      document.getElementById("resetView").addEventListener("click", () => {
+        fly.placeAt(START_POSITION.clone(), START_TARGET.clone());
+      });
+
+      const posOut = document.getElementById("posOut");
+      const speedOut = document.getElementById("speedOut");
+      const moveSpeedInput = document.getElementById("moveSpeed");
+      const moveSpeedOut = document.getElementById("moveSpeedOut");
+
+      const clock = new THREE.Clock();
+      let readoutAccumulator = 0;
+
+      renderer.setAnimationLoop(() => {
+        const delta = clock.getDelta();
+        fly.update(delta);
+        renderer.render(scene, camera);
+
+        // Throttle the DOM writes; the camera runs at the frame rate, the panel does not.
+        readoutAccumulator += delta;
+        if (readoutAccumulator < 0.1) return;
+        readoutAccumulator = 0;
+
+        const p = camera.position;
+        posOut.textContent = `${p.x.toFixed(0)}, ${p.y.toFixed(0)}, ${p.z.toFixed(0)}`;
+        speedOut.textContent = fly.moveSpeed.toFixed(1);
+
+        // The scroll wheel changes moveSpeed while looking, so keep the slider honest.
+        const rounded = Math.round(fly.moveSpeed);
+        if (Number(moveSpeedInput.value) !== rounded && rounded >= 1 && rounded <= 120) {
+          moveSpeedInput.value = String(rounded);
+          moveSpeedOut.textContent = String(rounded);
+        }
+      });
+
+      addEventListener("resize", () => {
+        camera.aspect = innerWidth / innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(innerWidth, innerHeight);
+      });
+    </script>
+  </body>
+</html>
