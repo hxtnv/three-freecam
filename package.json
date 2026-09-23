@@ -1,6 +1,6 @@
 {
   "name": "three-freecam",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Debug camera and editor-style scene-view controls for three.js. Right-drag to look, WASD to fly, middle-drag to pan, alt-drag to orbit. Unity-style free camera in 1.8 kB, no dependencies.",
   "type": "module",
   "main": "./dist/index.js",
