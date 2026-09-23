@@ -5,7 +5,12 @@ on:
     types: [published]
 
 jobs:
+  # A release never ships without the full matrix going green first.
+  ci:
+    uses: ./.github/workflows/ci.yml
+
   npm:
+    needs: ci
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -15,8 +20,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
           registry-url: https://registry.npmjs.org
       - run: npm ci
+
+      # The tag and package.json must agree, otherwise the release notes point at
+      # a version nobody can install.
+      - name: Check the tag matches package.json
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg="$(node -p "require('./package.json').version")"
+          if [ "$tag" != "$pkg" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match package.json version $pkg" >&2
+            exit 1
+          fi
+
       - run: npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
