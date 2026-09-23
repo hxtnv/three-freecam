@@ -415,8 +415,9 @@ npm run check   # typecheck, tests, bundle budget
 npx serve docs  # the demo site, at docs/
 ```
 
-Tests run on `node:test` against a small DOM stub, so there is no browser to install. See
-[test/](./test).
+Tests run on `node:test` against a small DOM stub, so there is no browser to install. The
+specs are in [test/](./test) and the stub is in
+[test-support/](./test-support), which keeps it out of the test runner's file discovery.
 
 ## Changelog
 

@@ -1,5 +1,9 @@
 // Minimal DOM stand-in so FreeCam can be exercised under node:test without a browser
 // or a headless-DOM dependency. It implements only the surface FreeCam touches.
+//
+// This lives outside test/ on purpose: the node:test runner treats every .js file under a
+// directory named test as a test file, and a helper with no tests in it would be reported
+// as an empty one.
 
 class StubTarget {
   constructor(name) {
