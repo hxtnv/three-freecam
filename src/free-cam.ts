@@ -60,10 +60,13 @@ const _quat = new Quaternion();
 const _matrix = new Matrix4();
 
 /**
- * Unity scene-view camera controls for three.js.
+ * A debug camera for three.js: editor-style scene-view controls, the way Unity, Unreal and
+ * Godot do it.
  *
  * Right drag to look and WASD to fly, middle drag to pan, alt + left drag to orbit, wheel to
  * dolly, F to frame the focus target.
+ *
+ * Construct it once, then call {@link FreeCam.update} with the frame delta in seconds.
  */
 export class FreeCam {
   enabled = true;
@@ -283,7 +286,7 @@ export class FreeCam {
     event.preventDefault();
     const notches = -Math.sign(event.deltaY);
 
-    // While looking, the wheel is a throttle rather than a dolly — same as the editor.
+    // While looking, the wheel is a throttle rather than a dolly, same as the editor.
     if (this.drag === "look") {
       const [min, max] = this.moveSpeedRange;
       const next = this.moveSpeed * Math.pow(this.speedStep, notches);
