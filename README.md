@@ -10,9 +10,9 @@ alt-drag to orbit, wheel to dolly, F to frame.
 [![downloads](https://img.shields.io/npm/dm/three-freecam?color=orange&label=downloads)](https://www.npmjs.com/package/three-freecam)
 [![license](https://img.shields.io/npm/l/three-freecam?color=blue)](./LICENSE)
 
-**[Try the live demo](https://hxtnv.github.io/three-freecam-demo/)** ·
+**[Try the live demo](https://hxtnv.github.io/three-freecam/)** ·
 **[Install from npm](https://www.npmjs.com/package/three-freecam)** ·
-**[Read the guide](https://hxtnv.github.io/three-freecam-demo/how-to-add-a-debug-camera-to-threejs.html)** ·
+**[Read the guide](https://hxtnv.github.io/three-freecam/how-to-add-a-debug-camera-to-threejs.html)** ·
 **[View source](https://github.com/hxtnv/three-freecam)**
 
 ```bash
@@ -39,10 +39,15 @@ WASD camera.
 
 https://github.com/user-attachments/assets/e120145d-ba64-429e-a774-79b15367efc2
 
-**[Fly around it in your browser](https://hxtnv.github.io/three-freecam-demo/)**, no install.
+**[Fly around it in your browser](https://hxtnv.github.io/three-freecam/)**, no install.
 
-To run the example in this repo: clone it, `npm install && npm run build`, serve the repo
-root and open `examples/`. That file is a complete scene in 60 lines.
+The demo lives in [docs/](./docs), and so does the written
+[guide](https://hxtnv.github.io/three-freecam/how-to-add-a-debug-camera-to-threejs.html).
+Serve that folder with `npx serve docs` to run the site locally.
+
+There is also [examples/](./examples), a complete scene in 60 lines that imports the local
+build rather than the CDN. Clone the repo, `npm install && npm run build`, serve the repo
+root and open `examples/`.
 
 ## Quick start
 
@@ -303,7 +308,7 @@ addEventListener("keydown", (e) => {
 
 `npm i three-freecam`, then `new FreeCam(camera, renderer.domElement)` and
 `fly.update(delta)` in your render loop. Full walkthrough in the
-[guide](https://hxtnv.github.io/three-freecam-demo/how-to-add-a-debug-camera-to-threejs.html).
+[guide](https://hxtnv.github.io/three-freecam/how-to-add-a-debug-camera-to-threejs.html).
 
 ### Does it work with React Three Fiber?
 
@@ -407,6 +412,7 @@ it with framerate-independent exponential decay, so the same value feels the sam
 ```bash
 npm install
 npm run check   # typecheck, tests, bundle budget
+npx serve docs  # the demo site, at docs/
 ```
 
 Tests run on `node:test` against a small DOM stub, so there is no browser to install. See

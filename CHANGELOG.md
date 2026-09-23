@@ -12,7 +12,7 @@ them is listed under **Changed** or **Removed** with a migration note.
 ### Added
 
 - Live demo and a written guide at
-  [hxtnv.github.io/three-freecam-demo](https://hxtnv.github.io/three-freecam-demo/).
+  [hxtnv.github.io/three-freecam](https://hxtnv.github.io/three-freecam/).
 - A test suite covering flight, look, pan, orbit, dolly, the fly-speed throttle, pointer
   lock, `focus`, `placeAt`, `enabled` and `dispose`. It runs on `node:test` against a
   small DOM stub, so there is no headless browser in the loop.

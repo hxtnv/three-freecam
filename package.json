@@ -75,7 +75,7 @@
   "bugs": {
     "url": "https://github.com/hxtnv/three-freecam/issues"
   },
-  "homepage": "https://hxtnv.github.io/three-freecam-demo/",
+  "homepage": "https://hxtnv.github.io/three-freecam/",
   "peerDependencies": {
     "three": ">=0.150.0"
   },
