@@ -10,7 +10,7 @@ import {
 } from "three";
 
 import { FreeCam } from "../dist/index.js";
-import { drag, installDom, keyDown, keyUp } from "./dom-stub.js";
+import { drag, installDom, keyDown, keyUp } from "../test-support/dom-stub.js";
 
 const FRAME = 1 / 60;
 
